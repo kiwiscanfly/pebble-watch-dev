@@ -44,11 +44,10 @@ pebble install --cloudpebble --logs  # ...and stream app logs
 pebble publish                   # publish to the appstore
 ```
 
-**Installing to the physical Pebble Time 2:** use `pebble install --cloudpebble`
-(routes through the Pebble mobile app's CloudPebble connection; watch must be
-connected to the app over Bluetooth). Add `--logs` to stream app logs. The
-direct `--phone <ip>` Developer Connection path was unreliable here (connection
-refused), so prefer `--cloudpebble`.
+**On-device install** uses `pebble install --cloudpebble` (via the phone app over
+Bluetooth; add `--logs` to stream). The **`pebble-build-deploy`** skill has the full
+command set, the `--phone` unreliability caveat, and emulator state-driving — and
+encodes that on-device/long-running commands are yours to run, not mine.
 
 ## Linting
 
@@ -61,18 +60,15 @@ installing, so it blocks broken code from reaching the watch. ESLint lives in
 
 ## Vector assets (svg2pdc)
 
-The root **`svg2pdc/`** folder is a `uv`-managed Python 3 CLI (a modernized
-vendoring of Pebble's old `svg2pdc.py`) that converts SVG → **PDC** (Pebble Draw
-Command) vector files. Watchface art lives as SVG in `watchface/resources/svg/`
-(committed) and is converted to `watchface/resources/pdc/` (generated,
-git-ignored) by `npm run assets`, which `npm run build` runs automatically.
+Watchface art lives as committed SVG in `watchface/resources/svg/` and is converted
+to `watchface/resources/pdc/` (generated, git-ignored) by `npm run assets` (which
+`npm run build` runs). PDCs are declared in `package.json` as `{ "type":"raw" }`
+media and loaded by **positional resource ID** — keep `resources.js` in lockstep
+with `package.json` media order, or rendering silently breaks.
 
-- PDCs are declared in `package.json` as `{ "type":"raw", ... }` media; the build
-  bundles them. Resource IDs are **positional numbers** (1, 2, …) in declaration
-  order — JS loads them via `new Poco.PebbleDrawCommandImage(n)` + `render.drawDCI`.
-- The tool runs repo-locally (`uv run --project ../svg2pdc svg2pdc ...`); nothing
-  is installed globally. SVG support is a limited element set and `path` curves
-  are approximated — prefer circle/line/rect/polygon. See `svg2pdc/README.md`.
+The full pipeline (svg2pdc authoring limits, the order-sensitive ID bookkeeping,
+verifying output) is in the **`svg-to-pdc-assets`** skill, `svg2pdc/README.md`, and
+`snippets/project-config.md`.
 
 ## Build paths
 
@@ -85,16 +81,11 @@ git-ignored) by `npm run assets`, which `npm run build` runs automatically.
 
 ## Watchface architecture (`src/embeddedjs/`)
 
-The on-watch JS is a **widget architecture**. Keep new work within it:
-
-```
-main.js        Thin orchestrator: owns state, builds ctx, wires events → drawScreen()
-theme.js       createTheme(render) → { colors, fonts }      (visual style)
-layout.js      createLayout(render, theme) → per-element { x, y } anchors (positions)
-resources.js   RESOURCES = { ICON: 1, ... }                 (named resource IDs)
-dateTime.js    Pure formatters (formatTime/formatDate) — no Poco, unit-testable
-widgets/<x>.js Each exports draw(ctx, state); ctx = { render, theme, layout, images }
-```
+The on-watch JS is a **widget architecture**: one render path repaints the screen
+and loops small `draw(ctx, state)` widgets. The full module map, the
+event→state→drawScreen→widgets data flow, and the ctx/state contracts are in the
+**`watchface-architecture`** skill (auto-loads when editing
+`watchface/src/embeddedjs/`) and `snippets/watchface-structure.md`.
 
 Conventions (these exist because violating them has bitten us):
 - **Single render path.** Events mutate `state` and call `drawScreen()`, which
@@ -110,24 +101,23 @@ Conventions (these exist because violating them has bitten us):
 - **Register every module in `manifest.json`.** Flat modules go in the `"*"`
   array; widgets are namespaced (`"widgets/time": "./widgets/time"`) and imported
   as `"widgets/time"`. A new module that isn't registered won't resolve.
-- **Adding a feature = one widget** (`widgets/x.js`) + one entry in the `widgets`
-  array + a manifest line (+ a `resources.js`/media entry if it has an asset).
-- **Add features incrementally and verify in the emulator** before layering on —
-  `pebble install --emulator emery`, and drive state with helpers like
-  `pebble emu-battery --percent N [--charging]`.
+- **Adding a feature = one widget**, verified incrementally in the emulator. The
+  full add-a-widget procedure, template, and verify loop are in the
+  **`adding-watchface-widget`** skill and `snippets/widget-pattern.md`.
 
-### Poco gotchas (learned the hard way)
-- **`frameRoundRect` / `drawRoundRect` take `(x, y, width, height, color, radius)`**
-  — a Pebble `GRect` — even though the TypeScript typings name the args
-  `x0, y0, x1, y1`. Do **not** pass corner coordinates. `fillRectangle` is
-  `(color, x, y, w, h)`; `clip` is `(x, y, w, h)`.
-- **Don't paint an "empty" background inside a widget.** `drawScreen()` repaints
-  the whole background each frame, so e.g. a battery's unfilled area should just
-  be left as the background, not filled with black (that was a tutorial holdover
-  for black-screen watches).
-- **System fonts are fixed bitmap sizes.** `new render.Font("Bitham-Bold", 42)`
-  must be a size that exists (Bitham-Bold only exists at 42); an unavailable size
-  fails to load and blanks the watch. For arbitrary sizes use a custom font
-  resource.
-- **`event.date`, not `new Date()`.** Read the time from the `minutechange`
-  event; event-driven redraws (e.g. battery) reuse the last known `state.now`.
+### Poco gotchas
+
+The complete Poco API and detailed examples now live in the
+**`pebble-poco-rendering`** skill (auto-loads when editing
+`watchface/src/embeddedjs/`) and `snippets/poco-rendering.md`. The watch-blanking
+traps are kept here as an always-on safety net:
+
+- **System fonts are fixed bitmap sizes** — an unavailable size fails to load and
+  blanks the watch (valid sizes: `snippets/fonts.md`; e.g. Bitham-Bold only at 42).
+- **Draw-call arg orders differ from the typings.** `frameRoundRect` /
+  `drawRoundRect` take a Pebble `GRect` `(x, y, width, height, color, radius)` —
+  not corner coords; `fillRectangle` is `(color, x, y, w, h)`; `clip` is
+  `(x, y, w, h)`.
+- **Don't paint an "empty" background inside a widget** — `drawScreen()` repaints
+  the background each frame.
+- **`event.date`, not `new Date()`** — non-time redraws reuse `state.now`.
