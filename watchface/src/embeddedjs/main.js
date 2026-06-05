@@ -1,4 +1,5 @@
 import Poco from "commodetto/Poco";
+import { formatTime, formatDate } from "dateTime";
 
 const render = new Poco(screen);
 
@@ -16,48 +17,33 @@ const lightTan = render.makeColor(70, 52, 43);
 // Resource ID 1 = the first entry in package.json "resources.media" (ICON).
 const icon = new Poco.PebbleDrawCommandImage(1);
 
-// getDay() / getMonth() are zero-indexed
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-];
-
 // Vertical gap between the time and date lines
 const lineGap = 6;
+
+// Left x to horizontally center something of the given width on screen
+function centerX(width) {
+    return (render.width - width) / 2;
+}
+
+// Draw text horizontally centered at the given y
+function drawCentered(text, font, color, y) {
+    render.drawText(text, font, color, centerX(render.getTextWidth(text, font)), y);
+}
 
 function draw(event) {
     const now = event.date;
 
+    // Time sits just above the vertical middle, date below it, and the icon is
+    // centered in the space above the time.
+    const timeY = (render.height / 2) - timeFont.height + 5;
+    const dateY = timeY + timeFont.height + lineGap;
+    const iconY = (timeY - icon.height) / 2;
+
     render.begin();
     render.fillRectangle(lightTan, 0, 0, render.width, render.height);
-
-    // Get hours in 12 hour format
-    let hours = now.getHours() % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    const ampm = now.getHours() >= 12 ? "pm" : "am";
-    const timeStr = `${hours}:${minutes} ${ampm}`;
-
-    // Center the time on screen, sitting just above the vertical middle
-    const timeY = (render.height / 2) - timeFont.height + 5;
-    const timeWidth = render.getTextWidth(timeStr, timeFont);
-    render.drawText(timeStr, timeFont, purple,
-        (render.width - timeWidth) / 2, timeY);
-
-    // Date below the time, e.g. "Mon Jan 01"
-    const dayName = DAYS[now.getDay()];
-    const monthName = MONTHS[now.getMonth()];
-    const dateStr = `${dayName} ${monthName} ${String(now.getDate()).padStart(2, "0")}`;
-
-    const dateWidth = render.getTextWidth(dateStr, dateFont);
-    render.drawText(dateStr, dateFont, purple,
-        (render.width - dateWidth) / 2, timeY + timeFont.height + lineGap);
-
-    // Icon centered in the space above the time
-    const iconY = (timeY - icon.height) / 2;
-    render.drawDCI(icon, (render.width - icon.width) / 2, iconY);
-
+    render.drawDCI(icon, centerX(icon.width), iconY);
+    drawCentered(formatTime(now), timeFont, purple, timeY);
+    drawCentered(formatDate(now), dateFont, purple, dateY);
     render.end();
 }
 
