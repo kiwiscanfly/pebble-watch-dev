@@ -5,10 +5,23 @@ XS, alongside C.
 
 ## Building & running
 
+The npm scripts are the primary workflow:
+
+```sh
+npm run lint        # ESLint: unused/undefined vars + style checks
+npm run lint:fix    # auto-fix the fixable style issues
+npm run build       # pebble build (all targetPlatforms)
+npm run dev         # build + install to the watch, streaming logs
+npm run deploy      # lint, then build + install to the watch
+```
+
+`npm run deploy` runs the linter first and stops if it fails, so broken code
+doesn't reach the watch. Under the hood these wrap the `pebble` CLI:
+
 ```sh
 pebble build                          # build for all targetPlatforms
 pebble install --emulator emery       # install on the emery emulator
-pebble install --phone <ip>           # install to a paired phone
+pebble install --cloudpebble --logs   # install to the connected watch + logs
 ```
 
 ## Target platforms

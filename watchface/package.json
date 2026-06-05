@@ -4,7 +4,19 @@
   "version": "1.0.0",
   "keywords": ["pebble-app"],
   "private": true,
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "pebble build",
+    "dev": "npm run lint && pebble build && pebble install --cloudpebble --logs",
+    "deploy": "npm run lint && pebble build && pebble install --cloudpebble"
+  },
   "dependencies": {},
+  "devDependencies": {
+    "eslint": "^9",
+    "@eslint/js": "^9",
+    "@stylistic/eslint-plugin": "^2"
+  },
   "pebble": {
     "displayName": "watchface",
     "uuid": "9217a040-129a-4e51-acf9-8e9676a2da12",

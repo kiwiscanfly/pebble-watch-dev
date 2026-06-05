@@ -1,6 +1,7 @@
 # Pebble build output
 build/
 *.pbw
+.lock-waf_*
 
 # Dependencies
 node_modules/

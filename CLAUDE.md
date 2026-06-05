@@ -39,10 +39,25 @@ Common commands (run from inside a project dir):
 ```sh
 pebble build                     # build for all targetPlatforms
 pebble install --emulator emery  # run in the Pebble Time 2 emulator
-pebble install --phone <ip>      # install to a paired phone → watch
-pebble logs                      # view app logs
+pebble install --cloudpebble     # install to the physical watch via the phone app
+pebble install --cloudpebble --logs  # ...and stream app logs
 pebble publish                   # publish to the appstore
 ```
+
+**Installing to the physical Pebble Time 2:** use `pebble install --cloudpebble`
+(routes through the Pebble mobile app's CloudPebble connection; watch must be
+connected to the app over Bluetooth). Add `--logs` to stream app logs. The
+direct `--phone <ip>` Developer Connection path was unreliable here (connection
+refused), so prefer `--cloudpebble`.
+
+## Linting
+
+The `watchface/` project uses ESLint (flat config, `eslint.config.mjs`) for
+correctness (`no-undef`, `no-unused-vars`) plus style. Run `npm run lint` (or
+`npm run lint:fix`) from the project dir; `npm run deploy` lints before
+installing, so it blocks broken code from reaching the watch. ESLint lives in
+`devDependencies` only — the Pebble build ignores it (it reads just the
+`dependencies` key), so it never ships in the `.pbw`. No unit tests yet.
 
 ## Build paths
 

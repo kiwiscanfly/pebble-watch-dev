@@ -43,8 +43,22 @@ From inside a project directory:
 ```sh
 pebble build                     # build for all targetPlatforms
 pebble install --emulator emery  # run in the Pebble Time 2 emulator
-pebble install --phone <ip>      # install to a paired phone → watch
+pebble install --cloudpebble     # install to a physical watch via the phone app
 ```
+
+### Installing to a physical watch
+
+`--cloudpebble` is the method that works here: it routes the build through the
+Pebble mobile app's CloudPebble connection (the watch must be connected to the
+app over Bluetooth). No IP address needed.
+
+```sh
+pebble install --cloudpebble --logs   # install and stream app logs
+```
+
+> The direct `pebble install --phone <ip>` (local Wi-Fi Developer Connection)
+> path is documented but was unreliable here (connection refused). Prefer
+> `--cloudpebble`.
 
 ## Build paths
 
