@@ -82,3 +82,36 @@ git-ignored) by `npm run assets`, which `npm run build` runs automatically.
   project is an Alloy/Moddable project (`projectType: "moddable"`,
   `src/embeddedjs/` for on-watch JS, `src/pkjs/` for phone-side PebbleKit JS,
   `src/c/` for C glue around the Moddable runtime).
+
+## Watchface architecture (`src/embeddedjs/`)
+
+The on-watch JS is a **widget architecture**. Keep new work within it:
+
+```
+main.js        Thin orchestrator: owns state, builds ctx, wires events → drawScreen()
+theme.js       createTheme(render) → { colors, fonts }      (visual style)
+layout.js      createLayout(render, theme) → per-element { x, y } anchors (positions)
+resources.js   RESOURCES = { ICON: 1, ... }                 (named resource IDs)
+dateTime.js    Pure formatters (formatTime/formatDate) — no Poco, unit-testable
+widgets/<x>.js Each exports draw(ctx, state); ctx = { render, theme, layout, images }
+```
+
+Conventions (these exist because violating them has bitten us):
+- **Single render path.** Events mutate `state` and call `drawScreen()`, which
+  loops the `widgets` array. No per-feature draw logic or second redraw path.
+- **Separate pure logic from drawing.** Data→string/number logic goes in pure
+  modules (like `dateTime.js`) so it stays testable; widgets only draw.
+- **Never do throwing work at import.** Load resources/sensors in `init()`, not at
+  module top level — a throw there silently blanks the whole watch (cost us the
+  font-size and battery regressions).
+- **Name resources; don't hardcode IDs.** Use `RESOURCES.X`, not
+  `PebbleDrawCommandImage(2)`. IDs are positional — keep `resources.js` in sync
+  with `package.json` "resources.media" order.
+- **Register every module in `manifest.json`.** Flat modules go in the `"*"`
+  array; widgets are namespaced (`"widgets/time": "./widgets/time"`) and imported
+  as `"widgets/time"`. A new module that isn't registered won't resolve.
+- **Adding a feature = one widget** (`widgets/x.js`) + one entry in the `widgets`
+  array + a manifest line (+ a `resources.js`/media entry if it has an asset).
+- **Add features incrementally and verify in the emulator** before layering on —
+  `pebble install --emulator emery`, and drive state with helpers like
+  `pebble emu-battery --percent N [--charging]`.
