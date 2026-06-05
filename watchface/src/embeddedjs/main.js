@@ -1,50 +1,44 @@
 import Poco from "commodetto/Poco";
-import { formatTime, formatDate } from "dateTime";
+import { createTheme } from "theme";
+import { createLayout } from "layout";
+import { RESOURCES } from "resources";
+import * as iconWidget from "widgets/icon";
+import * as timeWidget from "widgets/time";
+import * as dateWidget from "widgets/date";
 
 const render = new Poco(screen);
+const theme = createTheme(render);
+const layout = createLayout(render, theme);
 
-// Fonts
-const timeFont = new render.Font("Bitham-Bold", 42);
-const dateFont = new render.Font("Gothic-Bold", 24);
+// Loaded in init() rather than at import, so a missing resource surfaces in one
+// place instead of silently blanking the watch.
+const images = {};
 
-// #7C6F9F
-const purple = render.makeColor(124, 111, 159);
+// Everything the widgets render from.
+const state = {
+    now: undefined
+};
 
-// #46342B
-const lightTan = render.makeColor(70, 52, 43);
+const ctx = { render, theme, layout, images };
+const widgets = [iconWidget, timeWidget, dateWidget];
 
-// Vector icon (resources/svg/icon.svg -> resources/pdc/icon.pdc via svg2pdc).
-// Resource ID 1 = the first entry in package.json "resources.media" (ICON).
-const icon = new Poco.PebbleDrawCommandImage(1);
-
-// Vertical gap between the time and date lines
-const lineGap = 6;
-
-// Left x to horizontally center something of the given width on screen
-function centerX(width) {
-    return (render.width - width) / 2;
-}
-
-// Draw text horizontally centered at the given y
-function drawCentered(text, font, color, y) {
-    render.drawText(text, font, color, centerX(render.getTextWidth(text, font)), y);
-}
-
-function draw(event) {
-    const now = event.date;
-
-    // Time sits just above the vertical middle, date below it, and the icon is
-    // centered in the space above the time.
-    const timeY = (render.height / 2) - timeFont.height + 5;
-    const dateY = timeY + timeFont.height + lineGap;
-    const iconY = (timeY - icon.height) / 2;
-
+function drawScreen() {
     render.begin();
-    render.fillRectangle(lightTan, 0, 0, render.width, render.height);
-    render.drawDCI(icon, centerX(icon.width), iconY);
-    drawCentered(formatTime(now), timeFont, purple, timeY);
-    drawCentered(formatDate(now), dateFont, purple, dateY);
+    render.fillRectangle(theme.colors.background, 0, 0, render.width, render.height);
+    for (let i = 0; i < widgets.length; i++) {
+        widgets[i].draw(ctx, state);
+    }
     render.end();
 }
 
-watch.addEventListener("minutechange", draw);
+function init() {
+    images.icon = new Poco.PebbleDrawCommandImage(RESOURCES.ICON);
+}
+
+init();
+
+// minutechange fires immediately on registration, painting the first frame.
+watch.addEventListener("minutechange", (event) => {
+    state.now = event.date;
+    drawScreen();
+});

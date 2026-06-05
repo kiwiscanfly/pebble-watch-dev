@@ -4,6 +4,9 @@
 		"$(MODDABLE)/examples/manifest_typings.json"
 	],
 	"modules": {
-		"*": ["./main", "./dateTime"]
+		"*": ["./main", "./theme", "./layout", "./resources", "./dateTime"],
+		"widgets/icon": "./widgets/icon",
+		"widgets/time": "./widgets/time",
+		"widgets/date": "./widgets/date"
 	}
 }
