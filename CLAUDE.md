@@ -115,3 +115,19 @@ Conventions (these exist because violating them has bitten us):
 - **Add features incrementally and verify in the emulator** before layering on —
   `pebble install --emulator emery`, and drive state with helpers like
   `pebble emu-battery --percent N [--charging]`.
+
+### Poco gotchas (learned the hard way)
+- **`frameRoundRect` / `drawRoundRect` take `(x, y, width, height, color, radius)`**
+  — a Pebble `GRect` — even though the TypeScript typings name the args
+  `x0, y0, x1, y1`. Do **not** pass corner coordinates. `fillRectangle` is
+  `(color, x, y, w, h)`; `clip` is `(x, y, w, h)`.
+- **Don't paint an "empty" background inside a widget.** `drawScreen()` repaints
+  the whole background each frame, so e.g. a battery's unfilled area should just
+  be left as the background, not filled with black (that was a tutorial holdover
+  for black-screen watches).
+- **System fonts are fixed bitmap sizes.** `new render.Font("Bitham-Bold", 42)`
+  must be a size that exists (Bitham-Bold only exists at 42); an unavailable size
+  fails to load and blanks the watch. For arbitrary sizes use a custom font
+  resource.
+- **`event.date`, not `new Date()`.** Read the time from the `minutechange`
+  event; event-driven redraws (e.g. battery) reuse the last known `state.now`.
