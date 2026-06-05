@@ -1,0 +1,54 @@
+# CLAUDE.md
+
+Guidance for working in this repo: development of **Pebble watchfaces and apps**
+for the modern Core Devices Pebble watches (2025 PebbleOS revival).
+
+## Context: this is the NEW Pebble, not the original
+
+Pebble was revived in 2025 by Eric Migicovsky's company **Core Devices** after
+Google open-sourced PebbleOS in January 2025. When researching or citing docs,
+distinguish old from new:
+
+- **Trust as canonical:** `developer.repebble.com` (SDK docs/tutorials),
+  `repebble.com` (hardware/app), `github.com/coredevices` (open-source PebbleOS
+  + SDK).
+- **Older community docs, use with care:** `developer.rebble.io` — its C API
+  tutorials are still largely valid but predate the relaunch.
+- **Outdated/dead — do not follow:** the original `pebble.com` SDK installer,
+  pre-2025 `pebble-tool` install instructions, and the old product names
+  "Core 2 Duo" / "Core Time 2" (now **Pebble 2 Duo** / **Pebble Time 2**).
+- App publishing goes through **Rebble Web Services**, the shared backend for
+  both the Core and Rebble appstores (`pebble publish`).
+
+## Hardware / platforms
+
+The maintainer owns a **Pebble Time 2** → SDK platform **`emery`**. Prefer
+`emery` for emulator runs and on-device installs. The other modern platform is
+`gabbro` (Pebble Round 2). Classic platforms (`aplite`, `basalt`, `chalk`,
+`diorite`) exist for older watches but aren't the focus here.
+
+## Toolchain
+
+The SDK is **already installed globally via `uv`** (`pebble` on PATH at
+`~/.local/bin/pebble`). Do **not** reinstall or run SDK installs yourself —
+those are long-running/interactive and are the user's to run. Current versions:
+pebble-tool v5.0.37, active SDK v4.9.169.
+
+Common commands (run from inside a project dir):
+
+```sh
+pebble build                     # build for all targetPlatforms
+pebble install --emulator emery  # run in the Pebble Time 2 emulator
+pebble install --phone <ip>      # install to a paired phone → watch
+pebble logs                      # view app logs
+pebble publish                   # publish to the appstore
+```
+
+## Build paths
+
+- **C** — classic native Pebble API; maximum API coverage.
+- **Alloy** — JavaScript framework on Moddable XS (runs JS on the watch). Faster
+  iteration, but not every C API is exposed yet. The existing `watchface/`
+  project is an Alloy/Moddable project (`projectType: "moddable"`,
+  `src/embeddedjs/` for on-watch JS, `src/pkjs/` for phone-side PebbleKit JS,
+  `src/c/` for C glue around the Moddable runtime).
