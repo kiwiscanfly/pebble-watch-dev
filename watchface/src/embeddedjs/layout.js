@@ -8,8 +8,20 @@ export function createLayout(render, theme) {
     const timeY = (render.height / 2) - theme.fonts.time.height + 5;
     const dateY = timeY + theme.fonts.time.height + lineGap;
 
+    // Battery is corner-anchored (top-left coords, not a center anchor); the
+    // extra 2px on the right leaves room for the terminal nub.
+    const margin = 8;
+    const batteryWidth = 20;
+    const batteryHeight = 10;
+
     return {
         time: { x: centerX, y: timeY },
-        date: { x: centerX, y: dateY }
+        date: { x: centerX, y: dateY },
+        battery: {
+            x: render.width - margin - batteryWidth - 2,
+            y: margin,
+            width: batteryWidth,
+            height: batteryHeight
+        }
     };
 }

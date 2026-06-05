@@ -40,6 +40,11 @@
           "type": "raw",
           "name": "ICON",
           "file": "pdc/icon.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "BOLT",
+          "file": "pdc/bolt.pdc"
         }
       ]
     }
