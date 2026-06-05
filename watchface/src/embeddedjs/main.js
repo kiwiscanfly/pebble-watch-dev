@@ -12,6 +12,10 @@ const purple = render.makeColor(124, 111, 159);
 // #46342B
 const lightTan = render.makeColor(70, 52, 43);
 
+// Vector icon (resources/svg/icon.svg -> resources/pdc/icon.pdc via svg2pdc).
+// Resource ID 1 = the first entry in package.json "resources.media" (ICON).
+const icon = new Poco.PebbleDrawCommandImage(1);
+
 // getDay() / getMonth() are zero-indexed
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
@@ -49,6 +53,10 @@ function draw(event) {
     const dateWidth = render.getTextWidth(dateStr, dateFont);
     render.drawText(dateStr, dateFont, purple,
         (render.width - dateWidth) / 2, timeY + timeFont.height + lineGap);
+
+    // Icon centered in the space above the time
+    const iconY = (timeY - icon.height) / 2;
+    render.drawDCI(icon, (render.width - icon.width) / 2, iconY);
 
     render.end();
 }

@@ -7,9 +7,10 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "build": "pebble build",
-    "dev": "npm run lint && pebble build && pebble install --cloudpebble --logs",
-    "deploy": "npm run lint && pebble build && pebble install --cloudpebble"
+    "assets": "uv run --project ../svg2pdc svg2pdc convert resources/svg resources/pdc",
+    "build": "npm run assets && pebble build",
+    "dev": "npm run lint && npm run build && pebble install --cloudpebble --logs",
+    "deploy": "npm run lint && npm run build && pebble install --cloudpebble"
   },
   "dependencies": {},
   "devDependencies": {
@@ -34,7 +35,13 @@
       "dummy"
     ],
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "raw",
+          "name": "ICON",
+          "file": "pdc/icon.pdc"
+        }
+      ]
     }
   }
 }

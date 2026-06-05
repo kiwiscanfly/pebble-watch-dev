@@ -59,6 +59,21 @@ installing, so it blocks broken code from reaching the watch. ESLint lives in
 `devDependencies` only — the Pebble build ignores it (it reads just the
 `dependencies` key), so it never ships in the `.pbw`. No unit tests yet.
 
+## Vector assets (svg2pdc)
+
+The root **`svg2pdc/`** folder is a `uv`-managed Python 3 CLI (a modernized
+vendoring of Pebble's old `svg2pdc.py`) that converts SVG → **PDC** (Pebble Draw
+Command) vector files. Watchface art lives as SVG in `watchface/resources/svg/`
+(committed) and is converted to `watchface/resources/pdc/` (generated,
+git-ignored) by `npm run assets`, which `npm run build` runs automatically.
+
+- PDCs are declared in `package.json` as `{ "type":"raw", ... }` media; the build
+  bundles them. Resource IDs are **positional numbers** (1, 2, …) in declaration
+  order — JS loads them via `new Poco.PebbleDrawCommandImage(n)` + `render.drawDCI`.
+- The tool runs repo-locally (`uv run --project ../svg2pdc svg2pdc ...`); nothing
+  is installed globally. SVG support is a limited element set and `path` curves
+  are approximated — prefer circle/line/rect/polygon. See `svg2pdc/README.md`.
+
 ## Build paths
 
 - **C** — classic native Pebble API; maximum API coverage.

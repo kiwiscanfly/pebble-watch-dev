@@ -3,6 +3,9 @@ build/
 *.pbw
 .lock-waf_*
 
+# Generated PDC vector resources (built from resources/svg/*.svg by svg2pdc)
+watchface/resources/pdc/
+
 # Dependencies
 node_modules/
 
